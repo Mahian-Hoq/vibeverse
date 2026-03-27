@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabase';
-import { Plus, Trash2, Loader, AlertCircle, Image as ImageIcon } from 'lucide-react';
+import { createClient } from '@/utils/supabase/client';
+import { Plus, Trash2, Loader, AlertCircle } from 'lucide-react';
 
 interface Subcategory {
   id: string;
@@ -52,6 +52,8 @@ export default function ProductsPage() {
     try {
       setLoading(true);
       setError(null);
+
+      const supabase = createClient();
 
       // Fetch subcategories
       const { data: subcategoriesData, error: subcategoriesError } = await supabase
@@ -160,6 +162,8 @@ export default function ProductsPage() {
         .map((tag) => tag.trim())
         .filter((tag) => tag.length > 0);
 
+      const supabase = createClient();
+
       // Insert product into Supabase
       const { error: insertError } = await supabase.from('products').insert([
         {
@@ -202,6 +206,8 @@ export default function ProductsPage() {
     try {
       setDeleteLoading(id);
       setError(null);
+
+      const supabase = createClient();
 
       const { error: deleteError } = await supabase
         .from('products')
@@ -459,7 +465,7 @@ export default function ProductsPage() {
                       {product.title}
                     </td>
                     <td className="px-6 py-4 text-sm font-bold text-pink-600">
-                      ${product.price.toFixed(2)}
+                      Tk. {product.price.toFixed(2)}
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-600">
                       <span className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-xs font-medium">

@@ -1,23 +1,23 @@
 import { Package, ShoppingCart, DollarSign } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@/utils/supabase/server';
+import ProductSalesChart from '@/components/ProductSalesChart';
 
-interface Order {
-  id: string;
-  customer_name: string;
-  status: string;
-  created_at: string;
-  total_amount: number;
+interface ProductSalesData {
+  productName: string;
+  totalQuantity: number;
 }
 
 interface DashboardMetrics {
   totalProducts: number;
   totalOrders: number;
   totalRevenue: number;
-  recentOrders: Order[];
+  productSalesData: ProductSalesData[];
 }
 
 async function getDashboardMetrics(): Promise<DashboardMetrics> {
   try {
+    const supabase = await createClient();
+    
     // Fetch total products count
     const { count: productCount, error: productError } = await supabase
       .from('products')
@@ -45,20 +45,35 @@ async function getDashboardMetrics(): Promise<DashboardMetrics> {
       0
     );
 
-    // Fetch recent 5 orders
-    const { data: recentOrdersData, error: recentError } = await supabase
-      .from('orders')
-      .select('id, customer_name, status, created_at, total_amount')
-      .order('created_at', { ascending: false })
-      .limit(5);
+    // Fetch product sales data
+    const { data: orderItemsData, error: orderItemsError } = await supabase
+      .from('order_items')
+      .select('product_id, quantity, products(title)');
 
-    if (recentError) throw new Error(recentError.message);
+    if (orderItemsError) throw new Error(orderItemsError.message);
+
+    // Aggregate data by product
+    const productSalesMap = new Map<string, number>();
+    (orderItemsData || []).forEach((item: any) => {
+      const productName = item.products?.title || 'Unknown Product';
+      const currentQuantity = productSalesMap.get(productName) || 0;
+      productSalesMap.set(productName, currentQuantity + (item.quantity || 0));
+    });
+
+    // Convert map to array and sort by quantity descending
+    const productSalesData: ProductSalesData[] = Array.from(productSalesMap)
+      .map(([productName, totalQuantity]) => ({
+        productName,
+        totalQuantity,
+      }))
+      .sort((a, b) => b.totalQuantity - a.totalQuantity)
+      .slice(0, 10); // Limit to top 10 products for readability
 
     return {
       totalProducts: productCount || 0,
       totalOrders: orderCount || 0,
       totalRevenue: totalRevenue,
-      recentOrders: (recentOrdersData || []) as Order[],
+      productSalesData,
     };
   } catch (error) {
     console.error('Error fetching dashboard metrics:', error);
@@ -66,7 +81,7 @@ async function getDashboardMetrics(): Promise<DashboardMetrics> {
       totalProducts: 0,
       totalOrders: 0,
       totalRevenue: 0,
-      recentOrders: [],
+      productSalesData: [],
     };
   }
 }
@@ -91,19 +106,19 @@ function formatDate(dateString: string): string {
   });
 }
 
-function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-  }).format(amount);
-}
-
 function getOrderIdShort(id: string): string {
   return id.slice(0, 8).toUpperCase();
 }
 
+function formatCurrency(amount: number): string {
+  return `Tk. ${amount.toLocaleString('en-BD', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
+}
+
 export default async function AdminDashboard() {
-  const { totalProducts, totalOrders, totalRevenue, recentOrders } =
+  const { totalProducts, totalOrders, totalRevenue, productSalesData } =
     await getDashboardMetrics();
 
   const stats = [
@@ -159,42 +174,8 @@ export default async function AdminDashboard() {
         })}
       </div>
 
-      {/* Quick Actions */}
-      <div className="grid grid-cols-1 lg:grid-cols-1 gap-6">
-        {/* Recent Orders Section */}
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <h2 className="text-xl font-bold text-gray-900 mb-4">Recent Orders</h2>
-          {recentOrders.length === 0 ? (
-            <p className="text-gray-500 text-center py-8">No orders yet</p>
-          ) : (
-            <div className="space-y-4">
-              {recentOrders.map((order) => (
-                <div key={order.id} className="border-b border-gray-200 pb-4 last:border-b-0">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <p className="font-medium text-gray-900">Order #{getOrderIdShort(order.id)}</p>
-                      <p className="text-sm text-gray-500">{order.customer_name}</p>
-                      <p className="text-sm text-gray-500">{formatDate(order.created_at)}</p>
-                    </div>
-                    <div className="text-right">
-                      <span
-                        className={`px-3 py-1 ${getStatusColor(
-                          order.status
-                        )} text-xs font-medium rounded-full`}
-                      >
-                        {order.status}
-                      </span>
-                      <p className="text-sm font-semibold text-gray-900 mt-2">
-                        {formatCurrency(order.total_amount)}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
+      {/* Product Sales Chart */}
+      <ProductSalesChart initialData={productSalesData} />
     </div>
   );
 }

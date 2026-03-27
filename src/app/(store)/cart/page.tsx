@@ -6,7 +6,7 @@ import Image from 'next/image';
 import { Trash2, Minus, Plus, ShoppingBag, ArrowLeft } from 'lucide-react';
 import { useHydration } from '@/hooks/useHydration';
 
-const SHIPPING_COST = 5.0;
+const SHIPPING_COST = 100.0;
 
 export default function CartPage() {
   const isHydrated = useHydration();
@@ -141,7 +141,7 @@ export default function CartPage() {
                         {item.title}
                       </Link>
                       <p className="text-lg sm:text-xl font-bold bg-gradient-to-r from-pink-600 to-purple-600 bg-clip-text text-transparent mt-1">
-                        ${item.price.toFixed(2)}
+                        Tk. {item.price.toFixed(2)}
                       </p>
                     </div>
 
@@ -187,7 +187,7 @@ export default function CartPage() {
                   <div className="hidden sm:flex flex-col justify-center items-end">
                     <p className="text-sm text-gray-600 mb-2">Subtotal</p>
                     <p className="text-lg sm:text-xl font-bold text-gray-900">
-                      ${(item.price * item.quantity).toFixed(2)}
+                      Tk. {(item.price * item.quantity).toFixed(2)}
                     </p>
                   </div>
                 </div>
@@ -210,15 +210,15 @@ export default function CartPage() {
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600">Subtotal</span>
                   <span className="font-semibold text-gray-900">
-                    ${subtotal.toFixed(2)}
+                    Tk. {subtotal.toFixed(2)}
                   </span>
                 </div>
 
-                {/* Shipping */}
+                {/* Delivery */}
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-600">Shipping</span>
+                  <span className="text-gray-600">Delivery</span>
                   <span className="font-semibold text-gray-900">
-                    ${shipping.toFixed(2)}
+                    Tk. {shipping.toFixed(2)}
                   </span>
                 </div>
 
@@ -236,7 +236,7 @@ export default function CartPage() {
               <div className="flex justify-between items-center">
                 <span className="text-lg font-bold text-gray-900">Total</span>
                 <span className="text-2xl font-bold bg-gradient-to-r from-pink-600 to-purple-600 bg-clip-text text-transparent">
-                  ${total.toFixed(2)}
+                  Tk. {total.toFixed(2)}
                 </span>
               </div>
 

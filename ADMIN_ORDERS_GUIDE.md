@@ -39,8 +39,8 @@
   - Price per unit
   - Subtotal for that item
 - Order summary showing:
-  - Subtotal (total - shipping)
-  - Shipping cost ($5.00)
+  - Subtotal (total - delivery)
+  - Delivery cost (Tk. 100.00)
   - Grand total
 - Modal can be closed via the X button or Close button
 

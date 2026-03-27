@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { persist, PersistStorage } from 'zustand/middleware';
+import { persist, PersistStorage, StorageValue } from 'zustand/middleware';
 
 export interface CartItem {
   id: string;
@@ -57,7 +57,7 @@ const createRobustStorage = (): PersistStorage<CartStore> => {
         return null;
       }
     },
-    setItem: (name: string, value: CartStore) => {
+    setItem: (name: string, value: StorageValue<CartStore>) => {
       writeQueue.push(() => {
         try {
           localStorage.setItem(name, JSON.stringify(value));

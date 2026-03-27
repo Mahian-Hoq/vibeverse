@@ -7,7 +7,7 @@ import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
 import { ArrowLeft, Loader, CheckCircle, AlertCircle } from 'lucide-react';
 
-const SHIPPING_COST = 5.0;
+const SHIPPING_COST = 100.0;
 
 interface OrderFormData {
   name: string;
@@ -308,7 +308,7 @@ export default function CheckoutPage() {
                     <div>
                       <h3 className="font-semibold text-blue-900 mb-2">bKash Payment Instructions:</h3>
                       <p className="text-blue-800 text-sm">
-                        Please send <span className="font-bold">${total.toFixed(2)}</span> to our bKash account:
+                        Please send <span className="font-bold">Tk. {total.toFixed(2)}</span> to our bKash account:
                       </p>
                       <p className="text-blue-900 font-mono font-bold text-lg mt-2">017XXXXXXXX</p>
                       <p className="text-blue-800 text-sm mt-2">
@@ -363,7 +363,7 @@ export default function CheckoutPage() {
                       <p className="text-gray-600 text-xs mt-1">Qty: {item.quantity}</p>
                     </div>
                     <p className="font-semibold text-gray-900 ml-4">
-                      ${(item.price * item.quantity).toFixed(2)}
+                      Tk. {(item.price * item.quantity).toFixed(2)}
                     </p>
                   </div>
                 ))}
@@ -373,11 +373,11 @@ export default function CheckoutPage() {
               <div className="space-y-3">
                 <div className="flex justify-between text-gray-600">
                   <span>Subtotal</span>
-                  <span className="font-semibold text-gray-900">${subtotal.toFixed(2)}</span>
+                  <span className="font-semibold text-gray-900">Tk. {subtotal.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-gray-600">
-                  <span>Shipping</span>
-                  <span className="font-semibold text-gray-900">${shipping.toFixed(2)}</span>
+                  <span>Delivery</span>
+                  <span className="font-semibold text-gray-900">Tk. {shipping.toFixed(2)}</span>
                 </div>
               </div>
 
@@ -386,7 +386,7 @@ export default function CheckoutPage() {
                 <div className="flex justify-between items-center">
                   <span className="text-lg font-bold text-gray-900">Total</span>
                   <span className="text-3xl font-bold bg-gradient-to-r from-pink-600 to-purple-600 bg-clip-text text-transparent">
-                    ${total.toFixed(2)}
+                    Tk. {total.toFixed(2)}
                   </span>
                 </div>
               </div>

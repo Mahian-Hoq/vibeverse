@@ -2,7 +2,9 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Menu, X, LayoutDashboard, Layers, Grid, Package, ShoppingCart } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Menu, X, LayoutDashboard, Layers, Grid, Package, ShoppingCart, LogOut, Image } from 'lucide-react';
+import { signOut } from '@/app/actions/auth';
 
 export default function AdminLayout({
   children,
@@ -10,13 +12,27 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const router = useRouter();
 
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
   };
 
+  const handleLogout = async () => {
+    try {
+      setIsLoggingOut(true);
+      await signOut();
+      window.location.href = '/login';
+    } catch (error) {
+      console.error('Logout error:', error);
+      setIsLoggingOut(false);
+    }
+  };
+
   const navLinks = [
     { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
+    { href: '/admin/banners', label: 'Hero Banners', icon: Image },
     { href: '/admin/categories', label: 'Categories', icon: Layers },
     { href: '/admin/subcategories', label: 'Subcategories', icon: Grid },
     { href: '/admin/products', label: 'Products', icon: Package },
@@ -34,9 +50,14 @@ export default function AdminLayout({
         <div className="flex flex-col h-full">
           {/* Sidebar Header */}
           <div className="flex items-center justify-between p-6 border-b border-gray-800">
-            <h2 className="text-xl font-bold bg-gradient-to-r from-pink-400 to-purple-400 bg-clip-text text-transparent">
-              VibeVerse
-            </h2>
+            <Link
+              href="/"
+              className="cursor-pointer hover:opacity-80 transition-opacity duration-200"
+            >
+              <h2 className="text-xl font-bold bg-gradient-to-r from-pink-400 to-purple-400 bg-clip-text text-transparent">
+                VibeVerse
+              </h2>
+            </Link>
             <button
               onClick={toggleSidebar}
               className="lg:hidden p-2 hover:bg-gray-800 rounded-lg transition-colors"
@@ -65,8 +86,13 @@ export default function AdminLayout({
 
           {/* Sidebar Footer */}
           <div className="p-6 border-t border-gray-800">
-            <button className="w-full px-4 py-2 bg-pink-600 hover:bg-pink-700 rounded-lg font-medium transition-colors duration-200 text-center">
-              Logout
+            <button
+              onClick={handleLogout}
+              disabled={isLoggingOut}
+              className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-pink-600 hover:bg-pink-700 rounded-lg font-medium transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <LogOut className="w-4 h-4" />
+              {isLoggingOut ? 'Logging out...' : 'Logout'}
             </button>
           </div>
         </div>

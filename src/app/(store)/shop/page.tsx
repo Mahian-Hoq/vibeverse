@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@/utils/supabase/server';
 import Link from 'next/link';
 import AddToCartButton from '@/components/AddToCartButton';
 
@@ -27,6 +27,7 @@ interface Product {
 
 async function getCategories(): Promise<Category[]> {
   try {
+    const supabase = await createClient();
     const { data, error } = await supabase
       .from('categories')
       .select('*')
@@ -46,6 +47,7 @@ async function getCategories(): Promise<Category[]> {
 
 async function getSubcategoriesByCategory(categoryId: string): Promise<string[]> {
   try {
+    const supabase = await createClient();
     const { data, error } = await supabase
       .from('subcategories')
       .select('id')
@@ -65,6 +67,7 @@ async function getSubcategoriesByCategory(categoryId: string): Promise<string[]>
 
 async function getProducts(categoryFilter?: string): Promise<Product[]> {
   try {
+    const supabase = await createClient();
     let query = supabase.from('products').select('*, subcategories(name)').order('created_at', { ascending: false });
 
     // If category filter exists, we need to filter by subcategories in that category
@@ -216,7 +219,7 @@ export default async function ShopPage({
 
                       {/* Price */}
                       <p className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-pink-600 to-purple-600 bg-clip-text text-transparent mb-4 mt-auto">
-                        ${product.price.toFixed(2)}
+                        Tk. {product.price.toFixed(2)}
                       </p>
 
                       {/* Add to Cart Button */}

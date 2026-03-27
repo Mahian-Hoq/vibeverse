@@ -267,7 +267,7 @@ export default function OrdersPage() {
 
                     {/* Total Amount */}
                     <td className="px-6 py-4 text-sm font-semibold text-gray-900">
-                      ${order.total_amount.toFixed(2)}
+                      Tk. {order.total_amount.toFixed(2)}
                     </td>
 
                     {/* Payment Method */}
@@ -374,13 +374,13 @@ export default function OrdersPage() {
                           <div>
                             <p className="text-gray-600">Price</p>
                             <p className="font-semibold text-gray-900">
-                              ${item.price_at_purchase.toFixed(2)}
+                              Tk. {item.price_at_purchase.toFixed(2)}
                             </p>
                           </div>
                           <div>
                             <p className="text-gray-600">Subtotal</p>
                             <p className="font-semibold text-gray-900">
-                              ${(item.quantity * item.price_at_purchase).toFixed(2)}
+                              Tk. {(item.quantity * item.price_at_purchase).toFixed(2)}
                             </p>
                           </div>
                         </div>
@@ -393,17 +393,17 @@ export default function OrdersPage() {
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-600">Subtotal</span>
                       <span className="font-semibold text-gray-900">
-                        ${(selectedOrder.total_amount - 5).toFixed(2)}
+                        Tk. {(selectedOrder.total_amount - 100).toFixed(2)}
                       </span>
                     </div>
                     <div className="flex justify-between text-sm">
-                      <span className="text-gray-600">Shipping</span>
-                      <span className="font-semibold text-gray-900">$5.00</span>
+                      <span className="text-gray-600">Delivery</span>
+                      <span className="font-semibold text-gray-900">Tk. 100.00</span>
                     </div>
                     <div className="flex justify-between pt-2 border-t border-gray-200">
                       <span className="font-bold text-gray-900">Total</span>
                       <span className="text-lg font-bold text-pink-600">
-                        ${selectedOrder.total_amount.toFixed(2)}
+                        Tk. {selectedOrder.total_amount.toFixed(2)}
                       </span>
                     </div>
                   </div>

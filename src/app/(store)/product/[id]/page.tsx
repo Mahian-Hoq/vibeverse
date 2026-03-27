@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@/utils/supabase/server';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
@@ -19,6 +19,7 @@ interface Product {
 
 async function getProduct(id: string): Promise<Product | null> {
   try {
+    const supabase = await createClient();
     const { data, error } = await supabase
       .from('products')
       .select('*, subcategories(name)')
@@ -95,7 +96,7 @@ export default async function ProductPage({
             {/* Price */}
             <div>
               <p className="text-4xl sm:text-5xl font-bold bg-gradient-to-r from-pink-600 to-purple-600 bg-clip-text text-transparent">
-                ${product.price.toFixed(2)}
+                Tk. {product.price.toFixed(2)}
               </p>
             </div>
 
