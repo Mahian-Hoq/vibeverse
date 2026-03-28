@@ -156,8 +156,8 @@ export default async function ProductPage({
                 <p className="text-sm text-gray-600">Authentic</p>
               </div>
               <div className="text-center p-4 bg-green-50 rounded-lg">
-                <p className="font-bold text-green-600">Free</p>
-                <p className="text-sm text-gray-600">Fast Shipping</p>
+                <p className="font-bold text-green-600">Fast</p>
+                <p className="text-sm text-gray-600">Delivery</p>
               </div>
             </div>
           </div>

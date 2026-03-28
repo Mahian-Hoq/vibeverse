@@ -130,9 +130,9 @@ export default async function Home() {
 
             {/* Trust Item 2 */}
             <div className="text-center">
-              <div className="text-3xl font-bold text-purple-600 mb-2">Free</div>
-              <p className="text-gray-700 font-semibold">Fast Delivery</p>
-              <p className="text-sm text-gray-600">On orders over Tk. 5000</p>
+              <div className="text-3xl font-bold text-purple-600 mb-2">Fast</div>
+              <p className="text-gray-700 font-semibold">Delivery</p>
+              <p className="text-sm text-gray-600">On any region of Bangladesh</p>
             </div>
 
             {/* Trust Item 3 */}
