@@ -10,6 +10,7 @@ interface Product {
   description: string;
   price: number;
   image_url: string;
+  in_stock?: boolean;
   subcategory_id: string;
   tags: string[];
   subcategories?: {
@@ -45,6 +46,7 @@ export default async function ProductPage({
 }) {
   const { id } = await params;
   const product = await getProduct(id);
+  const isInStock = product?.in_stock ?? true;
 
   if (!product) {
     notFound();
@@ -98,6 +100,11 @@ export default async function ProductPage({
               <p className="text-4xl sm:text-5xl font-bold bg-gradient-to-r from-pink-600 to-purple-600 bg-clip-text text-transparent">
                 Tk. {product.price.toFixed(2)}
               </p>
+              {!isInStock && (
+                <span className="inline-flex mt-3 items-center rounded-full bg-red-100 px-3 py-1 text-xs font-semibold text-red-700">
+                  Out of Stock
+                </span>
+              )}
             </div>
 
             {/* Description */}
@@ -133,6 +140,7 @@ export default async function ProductPage({
                   price: product.price,
                   image_url: product.image_url,
                 }}
+                disabled={!isInStock}
                 className="flex-1 py-4 sm:py-5 text-lg"
               />
             </div>

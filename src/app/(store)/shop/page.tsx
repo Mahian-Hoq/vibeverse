@@ -19,6 +19,7 @@ interface Product {
   title: string;
   price: number;
   image_url: string;
+  in_stock?: boolean;
   subcategory_id: string;
   subcategories?: {
     name: string;
@@ -201,6 +202,17 @@ export default async function ShopPage({
                         alt={product.title}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       />
+                      {/* Stock Badge */}
+                      {!(product.in_stock ?? true) && (
+                        <div className="absolute top-2 right-2 bg-red-100 text-red-700 px-3 py-1 rounded-lg text-xs font-semibold">
+                          Out of Stock
+                        </div>
+                      )}
+                      {(product.in_stock ?? true) && (
+                        <div className="absolute top-2 right-2 bg-green-100 text-green-700 px-3 py-1 rounded-lg text-xs font-semibold">
+                          In Stock
+                        </div>
+                      )}
                     </Link>
 
                     {/* Product Info */}
@@ -230,6 +242,7 @@ export default async function ShopPage({
                           price: product.price,
                           image_url: product.image_url,
                         }}
+                        disabled={!(product.in_stock ?? true)}
                       />
                     </div>
                   </div>

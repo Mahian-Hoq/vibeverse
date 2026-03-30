@@ -2,6 +2,7 @@ import { createClient } from '@/utils/supabase/server';
 import Link from 'next/link';
 import Image from 'next/image';
 import { ShoppingCart, Package } from 'lucide-react';
+import AddToCartButton from '@/components/AddToCartButton';
 
 interface Product {
   id: string;
@@ -9,6 +10,7 @@ interface Product {
   description: string;
   price: number;
   image_url: string;
+  in_stock?: boolean;
   subcategory_id: string;
 }
 
@@ -140,6 +142,17 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
                     <div className="absolute top-4 left-4 bg-gradient-to-r from-pink-500 to-purple-500 text-white px-4 py-2 rounded-full font-bold text-sm">
                       Combo Deal
                     </div>
+                    {/* Stock Badge */}
+                    {!(product.in_stock ?? true) && (
+                      <div className="absolute top-4 right-4 bg-red-100 text-red-700 px-3 py-1 rounded-lg text-xs font-semibold">
+                        Out of Stock
+                      </div>
+                    )}
+                    {(product.in_stock ?? true) && (
+                      <div className="absolute top-4 right-4 bg-green-100 text-green-700 px-3 py-1 rounded-lg text-xs font-semibold">
+                        In Stock
+                      </div>
+                    )}
                   </div>
 
                   {/* Product Details */}
@@ -188,10 +201,14 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
                       </div>
                       <Link
                         href={`/product/${product.id}`}
-                        className="inline-flex items-center gap-3 bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-700 hover:to-purple-700 text-white px-8 py-4 rounded-xl font-semibold transition-all duration-200 transform hover:scale-105 shadow-lg"
+                        className={`inline-flex items-center gap-3 text-white px-8 py-4 rounded-xl font-semibold transition-all duration-200 transform shadow-lg ${
+                          product.in_stock ?? true
+                            ? 'bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-700 hover:to-purple-700 hover:scale-105'
+                            : 'bg-gray-400 cursor-not-allowed opacity-60'
+                        }`}
                       >
                         <ShoppingCart className="w-5 h-5" />
-                        View Details
+                        {product.in_stock ?? true ? 'View Details' : 'Out of Stock'}
                       </Link>
                     </div>
                   </div>
@@ -219,24 +236,41 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
                         <Package className="w-12 h-12" />
                       </div>
                     )}
+                    {/* Stock Badge */}
+                    {!(product.in_stock ?? true) && (
+                      <div className="absolute top-2 right-2 bg-red-100 text-red-700 px-3 py-1 rounded-lg text-xs font-semibold">
+                        Out of Stock
+                      </div>
+                    )}
+                    {(product.in_stock ?? true) && (
+                      <div className="absolute top-2 right-2 bg-green-100 text-green-700 px-3 py-1 rounded-lg text-xs font-semibold">
+                        In Stock
+                      </div>
+                    )}
                   </div>
 
                   {/* Product Info */}
-                  <div className="p-4">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2 line-clamp-2 group-hover:text-pink-600 transition-colors">
-                      {product.title}
-                    </h3>
-                    <p className="text-gray-600 text-sm mb-4 line-clamp-2">
-                      {product.description}
-                    </p>
-                    <div className="flex items-center justify-between">
-                      <p className="text-2xl font-bold text-pink-600">
+                  <div className="p-4 flex flex-col h-full">
+                    <div className="flex-grow">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-2 line-clamp-2 group-hover:text-pink-600 transition-colors">
+                        {product.title}
+                      </h3>
+                      <p className="text-gray-600 text-sm mb-4 line-clamp-2">
+                        {product.description}
+                      </p>
+                      <p className="text-2xl font-bold text-pink-600 mb-4">
                         ৳{product.price.toLocaleString()}
                       </p>
-                      <div className="bg-pink-100 text-pink-600 p-2 rounded-lg">
-                        <ShoppingCart className="w-5 h-5" />
-                      </div>
                     </div>
+                    <AddToCartButton
+                      product={{
+                        id: product.id,
+                        title: product.title,
+                        price: product.price,
+                        image_url: product.image_url,
+                      }}
+                      disabled={!(product.in_stock ?? true)}
+                    />
                   </div>
                 </div>
               </Link>

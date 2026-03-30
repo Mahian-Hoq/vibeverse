@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { createClient } from '@/utils/supabase/client';
-import { Plus, Trash2, Loader, AlertCircle } from 'lucide-react';
+import { Plus, Trash2, Loader, AlertCircle, Pencil, X } from 'lucide-react';
+import { updateProduct } from '@/app/actions/products';
 
 interface Subcategory {
   id: string;
@@ -15,6 +16,7 @@ interface Product {
   description: string;
   price: number;
   image_url: string;
+  in_stock?: boolean;
   subcategory_id: string;
   tags: string[];
   created_at: string;
@@ -33,12 +35,25 @@ export default function ProductsPage() {
   const [newProductDescription, setNewProductDescription] = useState('');
   const [newProductPrice, setNewProductPrice] = useState('');
   const [newProductTags, setNewProductTags] = useState('');
+  const [newProductInStock, setNewProductInStock] = useState(true);
   const [selectedSubcategoryId, setSelectedSubcategoryId] = useState('');
   const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+
+  // Edit form state
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [editTitle, setEditTitle] = useState('');
+  const [editDescription, setEditDescription] = useState('');
+  const [editPrice, setEditPrice] = useState('');
+  const [editTags, setEditTags] = useState('');
+  const [editSubcategoryId, setEditSubcategoryId] = useState('');
+  const [editInStock, setEditInStock] = useState(true);
+  const [editImageFile, setEditImageFile] = useState<File | null>(null);
+  const [editImagePreview, setEditImagePreview] = useState<string | null>(null);
   
   // UI state
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isEditSubmitting, setIsEditSubmitting] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -99,6 +114,38 @@ export default function ProductsPage() {
     }
   };
 
+  const handleEditImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setEditImageFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setEditImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const openEditModal = (product: Product) => {
+    setEditingProduct(product);
+    setEditTitle(product.title);
+    setEditDescription(product.description);
+    setEditPrice(product.price.toString());
+    setEditTags((product.tags || []).join(', '));
+    setEditSubcategoryId(product.subcategory_id);
+    setEditInStock(product.in_stock ?? true);
+    setEditImageFile(null);
+    setEditImagePreview(product.image_url);
+    setError(null);
+    setSuccessMessage(null);
+  };
+
+  const closeEditModal = () => {
+    setEditingProduct(null);
+    setEditImageFile(null);
+    setEditImagePreview(null);
+  };
+
   const uploadImageToCloudinary = async (file: File): Promise<string> => {
     const formData = new FormData();
     formData.append('file', file);
@@ -118,6 +165,75 @@ export default function ProductsPage() {
 
     const data = await response.json();
     return data.secure_url;
+  };
+
+  const handleEditProduct = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!editingProduct) {
+      return;
+    }
+
+    if (!editTitle.trim()) {
+      setError('Product title is required');
+      return;
+    }
+
+    if (!editDescription.trim()) {
+      setError('Product description is required');
+      return;
+    }
+
+    if (!editPrice || parseFloat(editPrice) <= 0) {
+      setError('Valid product price is required');
+      return;
+    }
+
+    if (!editSubcategoryId) {
+      setError('Please select a subcategory');
+      return;
+    }
+
+    try {
+      setIsEditSubmitting(true);
+      setError(null);
+      setSuccessMessage(null);
+
+      let imageUrl: string | undefined;
+      if (editImageFile) {
+        imageUrl = await uploadImageToCloudinary(editImageFile);
+      }
+
+      const tagsArray = editTags
+        .split(',')
+        .map((tag) => tag.trim())
+        .filter((tag) => tag.length > 0);
+
+      const result = await updateProduct({
+        id: editingProduct.id,
+        title: editTitle.trim(),
+        description: editDescription.trim(),
+        price: parseFloat(editPrice),
+        subcategory_id: editSubcategoryId,
+        tags: tagsArray,
+        in_stock: editInStock,
+        image_url: imageUrl,
+      });
+
+      if (result?.error) {
+        throw new Error(result.error);
+      }
+
+      setSuccessMessage(`Product "${editTitle}" updated successfully!`);
+      closeEditModal();
+      await fetchData();
+      setTimeout(() => setSuccessMessage(null), 3000);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update product');
+      console.error('Error updating product:', err);
+    } finally {
+      setIsEditSubmitting(false);
+    }
   };
 
   const handleAddProduct = async (e: React.FormEvent) => {
@@ -173,6 +289,7 @@ export default function ProductsPage() {
           image_url: imageUrl,
           subcategory_id: selectedSubcategoryId,
           tags: tagsArray,
+          in_stock: newProductInStock,
         },
       ]);
 
@@ -184,6 +301,7 @@ export default function ProductsPage() {
       setNewProductDescription('');
       setNewProductPrice('');
       setNewProductTags('');
+      setNewProductInStock(true);
       setSelectedImageFile(null);
       setImagePreview(null);
       await fetchData();
@@ -356,6 +474,20 @@ export default function ProductsPage() {
             </div>
           </div>
 
+          {/* Inventory Status */}
+          <div>
+            <label className="inline-flex items-center gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={newProductInStock}
+                onChange={(e) => setNewProductInStock(e.target.checked)}
+                disabled={isSubmitting}
+                className="h-4 w-4 rounded border-gray-300 text-pink-600 focus:ring-pink-500"
+              />
+              <span className="text-sm font-medium text-gray-700">In Stock</span>
+            </label>
+          </div>
+
           {/* Image Upload */}
           <div>
             <label htmlFor="image" className="block text-sm font-medium text-gray-700 mb-2">
@@ -437,6 +569,9 @@ export default function ProductsPage() {
                   <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">
                     Tags
                   </th>
+                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">
+                    Stock
+                  </th>
                   <th className="px-6 py-3 text-right text-sm font-semibold text-gray-900">
                     Actions
                   </th>
@@ -488,24 +623,45 @@ export default function ProductsPage() {
                         )}
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-right">
-                      <button
-                        onClick={() => handleDeleteProduct(product.id, product.title)}
-                        disabled={deleteLoading === product.id}
-                        className="inline-flex items-center gap-2 px-4 py-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg font-medium transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                    <td className="px-6 py-4 text-sm text-gray-600">
+                      <span
+                        className={`px-3 py-1 rounded-full text-xs font-medium ${
+                          (product.in_stock ?? true)
+                            ? 'bg-green-100 text-green-700'
+                            : 'bg-red-100 text-red-700'
+                        }`}
                       >
-                        {deleteLoading === product.id ? (
-                          <>
-                            <Loader className="w-4 h-4 animate-spin" />
-                            Deleting...
-                          </>
-                        ) : (
-                          <>
-                            <Trash2 className="w-4 h-4" />
-                            Delete
-                          </>
-                        )}
-                      </button>
+                        {(product.in_stock ?? true) ? 'In Stock' : 'Out of Stock'}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <div className="inline-flex items-center gap-2">
+                        <button
+                          onClick={() => openEditModal(product)}
+                          disabled={isEditSubmitting}
+                          className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg font-medium transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          <Pencil className="w-4 h-4" />
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleDeleteProduct(product.id, product.title)}
+                          disabled={deleteLoading === product.id}
+                          className="inline-flex items-center gap-2 px-4 py-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg font-medium transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {deleteLoading === product.id ? (
+                            <>
+                              <Loader className="w-4 h-4 animate-spin" />
+                              Deleting...
+                            </>
+                          ) : (
+                            <>
+                              <Trash2 className="w-4 h-4" />
+                              Delete
+                            </>
+                          )}
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -521,6 +677,170 @@ export default function ProductsPage() {
           </div>
         )}
       </div>
+
+      {editingProduct && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+              <h2 className="text-xl font-bold text-gray-900">Edit Product</h2>
+              <button
+                onClick={closeEditModal}
+                className="p-2 rounded-lg hover:bg-gray-100 text-gray-500"
+                aria-label="Close edit modal"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleEditProduct} className="p-6 space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="edit-title" className="block text-sm font-medium text-gray-700 mb-2">
+                    Product Title
+                  </label>
+                  <input
+                    type="text"
+                    id="edit-title"
+                    value={editTitle}
+                    onChange={(e) => setEditTitle(e.target.value)}
+                    disabled={isEditSubmitting}
+                    className="w-full px-4 py-2 border-2 border-gray-200 rounded-lg bg-white text-gray-900 focus:border-pink-600 focus:outline-none transition-colors duration-200"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="edit-price" className="block text-sm font-medium text-gray-700 mb-2">
+                    Price (Tk.)
+                  </label>
+                  <input
+                    type="number"
+                    id="edit-price"
+                    value={editPrice}
+                    onChange={(e) => setEditPrice(e.target.value)}
+                    step="0.01"
+                    min="0"
+                    disabled={isEditSubmitting}
+                    className="w-full px-4 py-2 border-2 border-gray-200 rounded-lg bg-white text-gray-900 focus:border-pink-600 focus:outline-none transition-colors duration-200"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label htmlFor="edit-description" className="block text-sm font-medium text-gray-700 mb-2">
+                  Description
+                </label>
+                <textarea
+                  id="edit-description"
+                  value={editDescription}
+                  onChange={(e) => setEditDescription(e.target.value)}
+                  rows={4}
+                  disabled={isEditSubmitting}
+                  className="w-full px-4 py-2 border-2 border-gray-200 rounded-lg bg-white text-gray-900 focus:border-pink-600 focus:outline-none transition-colors duration-200 resize-none"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="edit-subcategory" className="block text-sm font-medium text-gray-700 mb-2">
+                    Subcategory
+                  </label>
+                  <select
+                    id="edit-subcategory"
+                    value={editSubcategoryId}
+                    onChange={(e) => setEditSubcategoryId(e.target.value)}
+                    disabled={isEditSubmitting || subcategories.length === 0}
+                    className="w-full px-4 py-2 border-2 border-gray-200 rounded-lg bg-white text-gray-900 focus:border-pink-600 focus:outline-none transition-colors duration-200"
+                  >
+                    {subcategories.map((subcat) => (
+                      <option key={subcat.id} value={subcat.id}>
+                        {subcat.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label htmlFor="edit-tags" className="block text-sm font-medium text-gray-700 mb-2">
+                    Tags (comma-separated)
+                  </label>
+                  <input
+                    type="text"
+                    id="edit-tags"
+                    value={editTags}
+                    onChange={(e) => setEditTags(e.target.value)}
+                    disabled={isEditSubmitting}
+                    className="w-full px-4 py-2 border-2 border-gray-200 rounded-lg bg-white text-gray-900 focus:border-pink-600 focus:outline-none transition-colors duration-200"
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => setEditInStock((prev) => !prev)}
+                  aria-pressed={editInStock}
+                  disabled={isEditSubmitting}
+                  className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                    editInStock
+                      ? 'bg-green-100 text-green-700 hover:bg-green-200'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  } disabled:opacity-50 disabled:cursor-not-allowed`}
+                >
+                  {editInStock ? 'In Stock' : 'Out of Stock'}
+                </button>
+              </div>
+
+              <div>
+                <label htmlFor="edit-image" className="block text-sm font-medium text-gray-700 mb-2">
+                  Replace Product Image (optional)
+                </label>
+                <div className="flex gap-4 items-start">
+                  <div className="flex-1">
+                    <input
+                      type="file"
+                      id="edit-image"
+                      accept="image/*"
+                      onChange={handleEditImageSelect}
+                      disabled={isEditSubmitting}
+                      className="w-full px-4 py-2 border-2 border-gray-200 rounded-lg bg-white text-gray-900 focus:border-pink-600 focus:outline-none transition-colors duration-200 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-pink-100 file:text-pink-700 hover:file:bg-pink-200"
+                    />
+                  </div>
+                  {editImagePreview && (
+                    <div className="relative w-24 h-24 rounded-lg overflow-hidden border-2 border-gray-200">
+                      <img src={editImagePreview} alt="Edit preview" className="w-full h-full object-cover" />
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={closeEditModal}
+                  disabled={isEditSubmitting}
+                  className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isEditSubmitting}
+                  className="inline-flex items-center gap-2 px-5 py-2 bg-pink-600 hover:bg-pink-700 text-white rounded-lg font-medium disabled:opacity-50"
+                >
+                  {isEditSubmitting ? (
+                    <>
+                      <Loader className="w-4 h-4 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    'Save Changes'
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

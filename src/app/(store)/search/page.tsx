@@ -8,6 +8,7 @@ interface Product {
   description: string;
   price: number;
   image_url: string;
+  in_stock?: boolean;
   tags: string[];
   subcategory_id: string;
   subcategories?: {
