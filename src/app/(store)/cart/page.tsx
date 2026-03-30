@@ -16,8 +16,8 @@ export default function CartPage() {
   const getTotalPrice = useCartStore((state) => state.getTotalPrice);
 
   const subtotal = getTotalPrice();
-  const shipping = items.length > 0 ? SHIPPING_COST : 0;
-  const total = subtotal + shipping;
+  const estimatedShipping = items.length > 0 ? SHIPPING_COST : 0;
+  const estimatedTotal = subtotal + estimatedShipping;
 
   // Loading state while hydrating
   if (!isHydrated) {
@@ -216,11 +216,14 @@ export default function CartPage() {
 
                 {/* Delivery */}
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-600">Delivery</span>
+                  <span className="text-gray-600">Delivery (at checkout)</span>
                   <span className="font-semibold text-gray-900">
-                    Tk. {shipping.toFixed(2)}
+                    Tk. 0.00 - 100.00
                   </span>
                 </div>
+                <p className="text-xs text-green-700">
+                  In DIU Campus Delivery is free. COD and bKash use Tk. 100.00 delivery fee.
+                </p>
 
                 {/* Discount (placeholder for future use) */}
                 <div className="flex justify-between items-center">
@@ -234,9 +237,9 @@ export default function CartPage() {
 
               {/* Total */}
               <div className="flex justify-between items-center">
-                <span className="text-lg font-bold text-gray-900">Total</span>
+                <span className="text-lg font-bold text-gray-900">Estimated Total</span>
                 <span className="text-2xl font-bold bg-gradient-to-r from-pink-600 to-purple-600 bg-clip-text text-transparent">
-                  Tk. {total.toFixed(2)}
+                  Tk. {estimatedTotal.toFixed(2)}
                 </span>
               </div>
 

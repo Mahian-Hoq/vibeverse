@@ -9,11 +9,13 @@ import { ArrowLeft, Loader, CheckCircle, AlertCircle } from 'lucide-react';
 
 const SHIPPING_COST = 100.0;
 
+type PaymentMethod = 'COD' | 'BKASH' | 'DIU_DELIVERY';
+
 interface OrderFormData {
   name: string;
   whatsapp_number: string;
   delivery_address: string;
-  payment_method: 'COD' | 'BKASH';
+  payment_method: PaymentMethod;
   bkash_last_3: string;
 }
 
@@ -63,7 +65,7 @@ export default function CheckoutPage() {
   }
 
   const subtotal = getTotalPrice();
-  const shipping = SHIPPING_COST;
+  const shipping = formData.payment_method === 'DIU_DELIVERY' ? 0 : SHIPPING_COST;
   const total = subtotal + shipping;
 
   const handleInputChange = (
@@ -76,7 +78,7 @@ export default function CheckoutPage() {
     }));
   };
 
-  const handlePaymentMethodChange = (method: 'COD' | 'BKASH') => {
+  const handlePaymentMethodChange = (method: PaymentMethod) => {
     setFormData((prev) => ({
       ...prev,
       payment_method: method,
@@ -266,9 +268,9 @@ export default function CheckoutPage() {
                 </div>
               </div>
 
-              {/* Payment Method */}
+              {/* Delivery & Payment Method */}
               <div className="bg-white rounded-xl shadow-sm p-6 space-y-6">
-                <h2 className="text-2xl font-bold text-gray-900">Payment Method</h2>
+                <h2 className="text-2xl font-bold text-gray-900">Delivery & Payment Method</h2>
 
                 {/* COD Option */}
                 <div className="border-2 border-gray-200 rounded-lg p-4 cursor-pointer hover:border-pink-600 transition-colors duration-200">
@@ -283,7 +285,7 @@ export default function CheckoutPage() {
                     />
                     <span className="ml-3 text-gray-900 font-semibold">Cash on Delivery (COD)</span>
                   </label>
-                  <p className="ml-7 mt-2 text-sm text-gray-600">Pay in cash when your order arrives</p>
+                  <p className="ml-7 mt-2 text-sm text-gray-600">Standard delivery fee: Tk. 100.00</p>
                 </div>
 
                 {/* bKash Option */}
@@ -299,7 +301,23 @@ export default function CheckoutPage() {
                     />
                     <span className="ml-3 text-gray-900 font-semibold">bKash</span>
                   </label>
-                  <p className="ml-7 mt-2 text-sm text-gray-600">Send money to our bKash account</p>
+                  <p className="ml-7 mt-2 text-sm text-gray-600">Standard delivery fee: Tk. 100.00</p>
+                </div>
+
+                {/* DIU Campus Delivery Option */}
+                <div className="border-2 border-gray-200 rounded-lg p-4 cursor-pointer hover:border-pink-600 transition-colors duration-200">
+                  <label className="flex items-center cursor-pointer">
+                    <input
+                      type="radio"
+                      name="payment_method"
+                      value="DIU_DELIVERY"
+                      checked={formData.payment_method === 'DIU_DELIVERY'}
+                      onChange={() => handlePaymentMethodChange('DIU_DELIVERY')}
+                      className="w-4 h-4 text-pink-600 border-gray-300 cursor-pointer"
+                    />
+                    <span className="ml-3 text-gray-900 font-semibold">In DIU Campus Delivery</span>
+                  </label>
+                  <p className="ml-7 mt-2 text-sm text-green-700 font-medium">Free delivery: Tk. 0.00</p>
                 </div>
 
                 {/* bKash Details (Conditional) */}

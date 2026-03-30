@@ -146,6 +146,17 @@ export default function OrdersPage() {
     return colors[status] || 'bg-gray-100 text-gray-800';
   };
 
+  const getPaymentMethodLabel = (paymentMethod: string) => {
+    const labels: Record<string, string> = {
+      COD: 'Cash on Delivery',
+      BKASH: 'bKash',
+      DIU_DELIVERY: 'In DIU Campus Delivery',
+    };
+    return labels[paymentMethod] || paymentMethod;
+  };
+
+  const getDeliveryFee = (paymentMethod: string) => (paymentMethod === 'DIU_DELIVERY' ? 0 : 100);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-96">
@@ -274,7 +285,7 @@ export default function OrdersPage() {
                     <td className="px-6 py-4 text-sm">
                       <div className="space-y-1">
                         <p className="font-medium text-gray-900">
-                          {order.payment_method === 'COD' ? 'Cash on Delivery' : 'bKash'}
+                          {getPaymentMethodLabel(order.payment_method)}
                         </p>
                         {order.payment_method === 'BKASH' && order.bkash_last_3 && (
                           <p className="text-gray-600 text-xs">Last 3: {order.bkash_last_3}</p>
@@ -393,12 +404,14 @@ export default function OrdersPage() {
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-600">Subtotal</span>
                       <span className="font-semibold text-gray-900">
-                        Tk. {(selectedOrder.total_amount - 100).toFixed(2)}
+                        Tk. {(selectedOrder.total_amount - getDeliveryFee(selectedOrder.payment_method)).toFixed(2)}
                       </span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-600">Delivery</span>
-                      <span className="font-semibold text-gray-900">Tk. 100.00</span>
+                      <span className="font-semibold text-gray-900">
+                        Tk. {getDeliveryFee(selectedOrder.payment_method).toFixed(2)}
+                      </span>
                     </div>
                     <div className="flex justify-between pt-2 border-t border-gray-200">
                       <span className="font-bold text-gray-900">Total</span>

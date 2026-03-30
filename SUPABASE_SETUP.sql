@@ -5,7 +5,7 @@ CREATE TABLE orders (
   customer_name VARCHAR(255) NOT NULL,
   whatsapp_number VARCHAR(20) NOT NULL,
   delivery_address TEXT NOT NULL,
-  payment_method VARCHAR(50) NOT NULL CHECK (payment_method IN ('COD', 'BKASH')),
+  payment_method VARCHAR(50) NOT NULL CHECK (payment_method IN ('COD', 'BKASH', 'DIU_DELIVERY')),
   bkash_last_3 VARCHAR(3),
   total_amount DECIMAL(10, 2) NOT NULL,
   status VARCHAR(50) DEFAULT 'Pending' CHECK (status IN ('Pending', 'Confirmed', 'Shipped', 'Delivered', 'Cancelled')),
