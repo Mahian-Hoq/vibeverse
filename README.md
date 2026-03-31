@@ -10,8 +10,8 @@
 ## 🌐 Live Preview
 **Check out the live site:** [vibeverse.studio](https://vibeverse.studio)
 
-*(Tip: Add a beautiful screenshot of your homepage here by replacing the link below!)*
-> `<img src="/public/screenshots/homepage.png" alt="VibeVerse Homepage" width="100%" />`
+<img width="1910" height="919" alt="image" src="https://github.com/user-attachments/assets/d17674ff-98cd-49ed-8867-f6380683d6c0" />
+
 
 ---
 
