@@ -7,6 +7,7 @@ import { CheckCircle, Package, Mail } from 'lucide-react';
 export default function CheckoutSuccessContent() {
   const searchParams = useSearchParams();
   const orderId = searchParams.get('order_id');
+  const shortOrderId = orderId ? orderId.slice(0, 8).toUpperCase() : null;
 
   return (
     <div className="max-w-2xl w-full">
@@ -31,10 +32,10 @@ export default function CheckoutSuccessContent() {
         </div>
 
         {/* Order ID */}
-        {orderId && (
+        {shortOrderId && (
           <div className="bg-gray-50 rounded-lg p-6 space-y-2">
             <p className="text-sm text-gray-600 font-medium">ORDER ID</p>
-            <p className="text-xl sm:text-2xl font-bold text-gray-900 font-mono break-all">{orderId}</p>
+            <p className="text-xl sm:text-2xl font-bold text-gray-900 font-mono tracking-wider">{shortOrderId}</p>
           </div>
         )}
 
@@ -83,6 +84,14 @@ export default function CheckoutSuccessContent() {
 
         {/* CTA Buttons */}
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          {shortOrderId && (
+            <Link
+              href={`/track/${shortOrderId}`}
+              className="px-8 py-3 border-2 border-pink-200 hover:border-pink-400 text-pink-700 hover:text-pink-800 font-semibold rounded-lg transition-all duration-200 text-center bg-pink-50 hover:bg-pink-100"
+            >
+              Track Order
+            </Link>
+          )}
           <Link
             href="/shop"
             className="px-8 py-3 bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-700 hover:to-purple-700 text-white font-semibold rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl text-center"

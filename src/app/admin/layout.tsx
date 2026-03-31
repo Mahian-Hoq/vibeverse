@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Menu, X, LayoutDashboard, Layers, Grid, Package, ShoppingCart, LogOut, Image } from 'lucide-react';
+import { Menu, X, LayoutDashboard, Layers, Grid, Package, ShoppingCart, LogOut, Image, MessageSquare } from 'lucide-react';
 import { signOut } from '@/app/actions/auth';
 
 export default function AdminLayout({
@@ -37,6 +37,7 @@ export default function AdminLayout({
     { href: '/admin/subcategories', label: 'Subcategories', icon: Grid },
     { href: '/admin/products', label: 'Products', icon: Package },
     { href: '/admin/orders', label: 'Orders', icon: ShoppingCart },
+    { href: '/admin/feedback', label: 'Feedback', icon: MessageSquare },
   ];
 
   return (
