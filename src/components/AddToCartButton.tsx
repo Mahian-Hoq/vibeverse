@@ -8,12 +8,14 @@ interface AddToCartButtonProps {
   product: Omit<CartItem, 'quantity'>;
   className?: string;
   disabled?: boolean;
+  disabledLabel?: string;
 }
 
 export default function AddToCartButton({
   product,
   className = '',
   disabled = false,
+  disabledLabel = 'Out of Stock',
 }: AddToCartButtonProps) {
   const addItem = useCartStore((state) => state.addItem);
   const [isAdded, setIsAdded] = useState(false);
@@ -43,7 +45,7 @@ export default function AddToCartButton({
       } ${disabled ? '' : 'text-white shadow-md hover:shadow-lg'} font-semibold py-2 sm:py-3 rounded-lg transition-all duration-200 ${className}`}
     >
       <ShoppingCart className="w-4 h-4 sm:w-5 sm:h-5" />
-      <span>{disabled ? 'Out of Stock' : isAdded ? 'Added to Cart!' : 'Add to Cart'}</span>
+      <span>{disabled ? disabledLabel : isAdded ? 'Added to Cart!' : 'Add to Cart'}</span>
     </button>
   );
 }

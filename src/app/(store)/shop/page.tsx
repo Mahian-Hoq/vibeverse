@@ -1,6 +1,5 @@
 import { createClient } from '@/utils/supabase/server';
 import Link from 'next/link';
-import AddToCartButton from '@/components/AddToCartButton';
 
 interface Category {
   id: string;
@@ -234,16 +233,12 @@ export default async function ShopPage({
                         Tk. {product.price.toFixed(2)}
                       </p>
 
-                      {/* Add to Cart Button */}
-                      <AddToCartButton
-                        product={{
-                          id: product.id,
-                          title: product.title,
-                          price: product.price,
-                          image_url: product.image_url,
-                        }}
-                        disabled={!(product.in_stock ?? true)}
-                      />
+                      <Link
+                        href={`/product/${product.id}`}
+                        className="inline-flex items-center justify-center gap-2 w-full bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-700 hover:to-purple-700 text-white shadow-md hover:shadow-lg font-semibold py-2 sm:py-3 rounded-lg transition-all duration-200"
+                      >
+                        View Details
+                      </Link>
                     </div>
                   </div>
                 ))}

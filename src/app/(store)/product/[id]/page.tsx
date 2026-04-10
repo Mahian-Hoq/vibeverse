@@ -2,7 +2,7 @@ import { createClient } from '@/utils/supabase/server';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
-import AddToCartButton from '@/components/AddToCartButton';
+import ProductDetailsClient from './ProductDetailsClient';
 
 interface Product {
   id: string;
@@ -10,6 +10,8 @@ interface Product {
   description: string;
   price: number;
   image_url: string;
+  gallery_images?: string[];
+  available_colors?: string[];
   in_stock?: boolean;
   subcategory_id: string;
   tags: string[];
@@ -46,7 +48,6 @@ export default async function ProductPage({
 }) {
   const { id } = await params;
   const product = await getProduct(id);
-  const isInStock = product?.in_stock ?? true;
 
   if (!product) {
     notFound();
@@ -70,11 +71,17 @@ export default async function ProductPage({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 sm:gap-12">
           {/* Left Column - Product Image */}
           <div className="flex items-center justify-center">
-            <div className="w-full bg-gray-100 rounded-xl overflow-hidden shadow-lg">
-              <img
-                src={product.image_url}
-                alt={product.title}
-                className="w-full h-full object-cover aspect-square"
+            <div className="w-full">
+              <ProductDetailsClient
+                product={{
+                  id: product.id,
+                  title: product.title,
+                  price: product.price,
+                  image_url: product.image_url,
+                  gallery_images: product.gallery_images,
+                  available_colors: product.available_colors,
+                  in_stock: product.in_stock,
+                }}
               />
             </div>
           </div>
@@ -100,7 +107,7 @@ export default async function ProductPage({
               <p className="text-4xl sm:text-5xl font-bold bg-gradient-to-r from-pink-600 to-purple-600 bg-clip-text text-transparent">
                 Tk. {product.price.toFixed(2)}
               </p>
-              {!isInStock && (
+              {!(product.in_stock ?? true) && (
                 <span className="inline-flex mt-3 items-center rounded-full bg-red-100 px-3 py-1 text-xs font-semibold text-red-700">
                   Out of Stock
                 </span>
@@ -130,20 +137,6 @@ export default async function ProductPage({
                 </div>
               </div>
             )}
-
-            {/* Add to Cart Button */}
-            <div className="flex gap-4 pt-4">
-              <AddToCartButton
-                product={{
-                  id: product.id,
-                  title: product.title,
-                  price: product.price,
-                  image_url: product.image_url,
-                }}
-                disabled={!isInStock}
-                className="flex-1 py-4 sm:py-5 text-lg"
-              />
-            </div>
 
             {/* Additional Info */}
             <div className="bg-gray-50 rounded-lg p-6 space-y-4">

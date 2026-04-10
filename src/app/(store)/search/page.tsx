@@ -1,6 +1,5 @@
 import { createClient } from '@/utils/supabase/server';
 import Link from 'next/link';
-import AddToCartButton from '@/components/AddToCartButton';
 
 interface Product {
   id: string;
@@ -139,14 +138,12 @@ export default async function SearchPage({
                         <p className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-pink-600 to-purple-600 bg-clip-text text-transparent mb-4 mt-auto">
                           Tk. {product.price.toFixed(2)}
                         </p>
-                        <AddToCartButton
-                          product={{
-                            id: product.id,
-                            title: product.title,
-                            price: product.price,
-                            image_url: product.image_url,
-                          }}
-                        />
+                        <Link
+                          href={`/product/${product.id}`}
+                          className="inline-flex items-center justify-center gap-2 w-full bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-700 hover:to-purple-700 text-white shadow-md hover:shadow-lg font-semibold py-2 sm:py-3 rounded-lg transition-all duration-200"
+                        >
+                          View Details
+                        </Link>
                       </div>
                     </div>
                   ))}

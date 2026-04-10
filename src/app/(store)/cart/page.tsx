@@ -114,7 +114,7 @@ export default function CartPage() {
               {/* Cart Items List */}
               {items.map((item, index) => (
                 <div
-                  key={item.id}
+                  key={`${item.id}-${item.selectedColor || 'default'}`}
                   className={`flex gap-4 sm:gap-6 p-4 sm:p-6 ${
                     index !== items.length - 1 ? 'border-b border-gray-200' : ''
                   } hover:bg-gray-50 transition-colors duration-200`}
@@ -143,6 +143,9 @@ export default function CartPage() {
                       <p className="text-lg sm:text-xl font-bold bg-gradient-to-r from-pink-600 to-purple-600 bg-clip-text text-transparent mt-1">
                         Tk. {item.price.toFixed(2)}
                       </p>
+                      {item.selectedColor && (
+                        <p className="text-sm text-gray-600 mt-1">Color: {item.selectedColor}</p>
+                      )}
                     </div>
 
                     {/* Quantity Controls and Remove */}
@@ -151,7 +154,7 @@ export default function CartPage() {
                       <div className="flex items-center gap-2 bg-gray-100 rounded-lg p-1">
                         <button
                           onClick={() =>
-                            updateQuantity(item.id, Math.max(1, item.quantity - 1))
+                            updateQuantity(item.id, Math.max(1, item.quantity - 1), item.selectedColor)
                           }
                           className="p-1 hover:bg-gray-200 rounded transition-colors duration-200"
                           aria-label="Decrease quantity"
@@ -163,7 +166,7 @@ export default function CartPage() {
                         </span>
                         <button
                           onClick={() =>
-                            updateQuantity(item.id, item.quantity + 1)
+                            updateQuantity(item.id, item.quantity + 1, item.selectedColor)
                           }
                           className="p-1 hover:bg-gray-200 rounded transition-colors duration-200"
                           aria-label="Increase quantity"
@@ -174,7 +177,7 @@ export default function CartPage() {
 
                       {/* Remove Button */}
                       <button
-                        onClick={() => removeItem(item.id)}
+                        onClick={() => removeItem(item.id, item.selectedColor)}
                         className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors duration-200"
                         aria-label="Remove item"
                       >

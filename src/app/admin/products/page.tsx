@@ -16,6 +16,8 @@ interface Product {
   description: string;
   price: number;
   image_url: string;
+  gallery_images?: string[];
+  available_colors?: string[];
   in_stock?: boolean;
   subcategory_id: string;
   tags: string[];
@@ -39,6 +41,9 @@ export default function ProductsPage() {
   const [selectedSubcategoryId, setSelectedSubcategoryId] = useState('');
   const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [selectedGalleryFiles, setSelectedGalleryFiles] = useState<File[]>([]);
+  const [galleryPreviews, setGalleryPreviews] = useState<string[]>([]);
+  const [newProductColors, setNewProductColors] = useState('');
 
   // Edit form state
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
@@ -50,6 +55,9 @@ export default function ProductsPage() {
   const [editInStock, setEditInStock] = useState(true);
   const [editImageFile, setEditImageFile] = useState<File | null>(null);
   const [editImagePreview, setEditImagePreview] = useState<string | null>(null);
+  const [editGalleryFiles, setEditGalleryFiles] = useState<File[]>([]);
+  const [editGalleryPreviews, setEditGalleryPreviews] = useState<string[]>([]);
+  const [editColors, setEditColors] = useState('');
   
   // UI state
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -57,6 +65,7 @@ export default function ProductsPage() {
   const [deleteLoading, setDeleteLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
 
   // Fetch data on mount
   useEffect(() => {
@@ -114,6 +123,28 @@ export default function ProductsPage() {
     }
   };
 
+  const fileToDataUrl = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.onerror = () => reject(new Error('Failed to read image file'));
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handleGalleryImagesSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) {
+      setSelectedGalleryFiles([]);
+      setGalleryPreviews([]);
+      return;
+    }
+
+    setSelectedGalleryFiles(files);
+    const previews = await Promise.all(files.map((file) => fileToDataUrl(file)));
+    setGalleryPreviews(previews);
+  };
+
   const handleEditImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -126,16 +157,32 @@ export default function ProductsPage() {
     }
   };
 
+  const handleEditGalleryImagesSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) {
+      setEditGalleryFiles([]);
+      setEditGalleryPreviews(editingProduct?.gallery_images || []);
+      return;
+    }
+
+    setEditGalleryFiles(files);
+    const previews = await Promise.all(files.map((file) => fileToDataUrl(file)));
+    setEditGalleryPreviews(previews);
+  };
+
   const openEditModal = (product: Product) => {
     setEditingProduct(product);
     setEditTitle(product.title);
     setEditDescription(product.description);
     setEditPrice(product.price.toString());
     setEditTags((product.tags || []).join(', '));
+    setEditColors((product.available_colors || []).join(', '));
     setEditSubcategoryId(product.subcategory_id);
     setEditInStock(product.in_stock ?? true);
     setEditImageFile(null);
     setEditImagePreview(product.image_url);
+    setEditGalleryFiles([]);
+    setEditGalleryPreviews(product.gallery_images || []);
     setError(null);
     setSuccessMessage(null);
   };
@@ -144,6 +191,9 @@ export default function ProductsPage() {
     setEditingProduct(null);
     setEditImageFile(null);
     setEditImagePreview(null);
+    setEditGalleryFiles([]);
+    setEditGalleryPreviews([]);
+    setEditColors('');
   };
 
   const uploadImageToCloudinary = async (file: File): Promise<string> => {
@@ -204,10 +254,20 @@ export default function ProductsPage() {
         imageUrl = await uploadImageToCloudinary(editImageFile);
       }
 
+      let galleryImages: string[] | undefined;
+      if (editGalleryFiles.length > 0) {
+        galleryImages = await Promise.all(editGalleryFiles.map((file) => uploadImageToCloudinary(file)));
+      }
+
       const tagsArray = editTags
         .split(',')
         .map((tag) => tag.trim())
         .filter((tag) => tag.length > 0);
+
+      const colorsArray = editColors
+        .split(',')
+        .map((color) => color.trim())
+        .filter((color) => color.length > 0);
 
       const result = await updateProduct({
         id: editingProduct.id,
@@ -216,8 +276,10 @@ export default function ProductsPage() {
         price: parseFloat(editPrice),
         subcategory_id: editSubcategoryId,
         tags: tagsArray,
+        available_colors: colorsArray,
         in_stock: editInStock,
         image_url: imageUrl,
+        gallery_images: galleryImages,
       });
 
       if (result?.error) {
@@ -271,12 +333,20 @@ export default function ProductsPage() {
 
       // Upload image to Cloudinary first
       const imageUrl = await uploadImageToCloudinary(selectedImageFile);
+      const galleryImageUrls = selectedGalleryFiles.length > 0
+        ? await Promise.all(selectedGalleryFiles.map((file) => uploadImageToCloudinary(file)))
+        : [];
 
       // Parse tags
       const tagsArray = newProductTags
         .split(',')
         .map((tag) => tag.trim())
         .filter((tag) => tag.length > 0);
+
+      const colorsArray = newProductColors
+        .split(',')
+        .map((color) => color.trim())
+        .filter((color) => color.length > 0);
 
       const supabase = createClient();
 
@@ -289,6 +359,8 @@ export default function ProductsPage() {
           image_url: imageUrl,
           subcategory_id: selectedSubcategoryId,
           tags: tagsArray,
+          available_colors: colorsArray,
+          gallery_images: galleryImageUrls,
           in_stock: newProductInStock,
         },
       ]);
@@ -301,9 +373,12 @@ export default function ProductsPage() {
       setNewProductDescription('');
       setNewProductPrice('');
       setNewProductTags('');
+      setNewProductColors('');
       setNewProductInStock(true);
       setSelectedImageFile(null);
       setImagePreview(null);
+      setSelectedGalleryFiles([]);
+      setGalleryPreviews([]);
       await fetchData();
 
       // Clear success message after 3 seconds
@@ -474,6 +549,21 @@ export default function ProductsPage() {
             </div>
           </div>
 
+          <div>
+            <label htmlFor="colors" className="block text-sm font-medium text-gray-700 mb-2">
+              Available Colors (comma-separated)
+            </label>
+            <input
+              type="text"
+              id="colors"
+              value={newProductColors}
+              onChange={(e) => setNewProductColors(e.target.value)}
+              placeholder="e.g., Midnight Black, Rose Gold"
+              disabled={isSubmitting}
+              className="w-full px-4 py-2 border-2 border-gray-200 rounded-lg bg-white text-gray-900 placeholder-gray-400 focus:border-pink-600 focus:outline-none transition-colors duration-200 disabled:bg-gray-100 disabled:cursor-not-allowed"
+            />
+          </div>
+
           {/* Inventory Status */}
           <div>
             <label className="inline-flex items-center gap-3 cursor-pointer">
@@ -510,6 +600,30 @@ export default function ProductsPage() {
                 </div>
               )}
             </div>
+          </div>
+
+          <div>
+            <label htmlFor="gallery-images" className="block text-sm font-medium text-gray-700 mb-2">
+              Gallery Images (optional)
+            </label>
+            <input
+              type="file"
+              id="gallery-images"
+              accept="image/*"
+              multiple
+              onChange={handleGalleryImagesSelect}
+              disabled={isSubmitting}
+              className="w-full px-4 py-2 border-2 border-gray-200 rounded-lg bg-white text-gray-900 focus:border-pink-600 focus:outline-none transition-colors duration-200 disabled:bg-gray-100 disabled:cursor-not-allowed file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-pink-100 file:text-pink-700 hover:file:bg-pink-200"
+            />
+            {galleryPreviews.length > 0 && (
+              <div className="mt-3 grid grid-cols-4 gap-2">
+                {galleryPreviews.map((preview, idx) => (
+                  <div key={idx} className="relative w-full aspect-square rounded-lg overflow-hidden border-2 border-gray-200">
+                    <img src={preview} alt={`Gallery preview ${idx + 1}`} className="w-full h-full object-cover" />
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Submit Button */}
@@ -584,7 +698,15 @@ export default function ProductsPage() {
                     className="border-b border-gray-200 hover:bg-gray-50 transition-colors duration-150"
                   >
                     <td className="px-6 py-4">
-                      <div className="w-12 h-12 rounded-lg overflow-hidden bg-gray-100">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setPreviewImage(product.image_url);
+                        }}
+                        className="w-16 h-16 rounded-lg overflow-hidden bg-gray-100 cursor-pointer border border-gray-200 hover:border-pink-400 transition-colors duration-200"
+                        aria-label={`Preview image for ${product.title}`}
+                      >
                         <img
                           src={product.image_url}
                           alt={product.title}
@@ -594,7 +716,7 @@ export default function ProductsPage() {
                             target.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24"%3E%3Crect fill="%23f3f4f6" width="24" height="24"/%3E%3C/svg%3E';
                           }}
                         />
-                      </div>
+                      </button>
                     </td>
                     <td className="px-6 py-4 text-sm font-medium text-gray-900">
                       {product.title}
@@ -677,6 +799,35 @@ export default function ProductsPage() {
           </div>
         )}
       </div>
+
+      {previewImage && (
+        <div
+          className="fixed inset-0 z-[60] bg-black/70 flex items-center justify-center p-4"
+          onClick={() => setPreviewImage(null)}
+        >
+          <div
+            className="bg-white rounded-xl shadow-2xl w-full max-w-5xl p-4 sm:p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-end mb-4">
+              <button
+                type="button"
+                onClick={() => setPreviewImage(null)}
+                className="px-4 py-2 bg-pink-100 hover:bg-pink-200 text-pink-700 rounded-lg font-medium transition-colors duration-200"
+              >
+                Close
+              </button>
+            </div>
+            <div className="w-full flex items-center justify-center bg-gray-50 rounded-lg overflow-hidden">
+              <img
+                src={previewImage}
+                alt="Product preview"
+                className="w-full max-h-[80vh] object-contain"
+              />
+            </div>
+          </div>
+        </div>
+      )}
 
       {editingProduct && (
         <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
@@ -774,6 +925,21 @@ export default function ProductsPage() {
                 </div>
               </div>
 
+              <div>
+                <label htmlFor="edit-colors" className="block text-sm font-medium text-gray-700 mb-2">
+                  Available Colors (comma-separated)
+                </label>
+                <input
+                  type="text"
+                  id="edit-colors"
+                  value={editColors}
+                  onChange={(e) => setEditColors(e.target.value)}
+                  disabled={isEditSubmitting}
+                  placeholder="e.g., Midnight Black, Rose Gold"
+                  className="w-full px-4 py-2 border-2 border-gray-200 rounded-lg bg-white text-gray-900 focus:border-pink-600 focus:outline-none transition-colors duration-200"
+                />
+              </div>
+
               <div className="flex items-center gap-3">
                 <button
                   type="button"
@@ -811,6 +977,30 @@ export default function ProductsPage() {
                     </div>
                   )}
                 </div>
+              </div>
+
+              <div>
+                <label htmlFor="edit-gallery-images" className="block text-sm font-medium text-gray-700 mb-2">
+                  Replace Gallery Images (optional)
+                </label>
+                <input
+                  type="file"
+                  id="edit-gallery-images"
+                  accept="image/*"
+                  multiple
+                  onChange={handleEditGalleryImagesSelect}
+                  disabled={isEditSubmitting}
+                  className="w-full px-4 py-2 border-2 border-gray-200 rounded-lg bg-white text-gray-900 focus:border-pink-600 focus:outline-none transition-colors duration-200 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-pink-100 file:text-pink-700 hover:file:bg-pink-200"
+                />
+                {editGalleryPreviews.length > 0 && (
+                  <div className="mt-3 grid grid-cols-4 gap-2">
+                    {editGalleryPreviews.map((preview, idx) => (
+                      <div key={idx} className="relative w-full aspect-square rounded-lg overflow-hidden border-2 border-gray-200">
+                        <img src={preview} alt={`Edit gallery preview ${idx + 1}`} className="w-full h-full object-cover" />
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <div className="flex items-center justify-end gap-3 pt-2">
