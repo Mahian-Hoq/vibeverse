@@ -1,5 +1,6 @@
 import { createClient } from '@/utils/supabase/server';
 import Link from 'next/link';
+import SubcategorySpyNav from './SubcategorySpyNav';
 
 interface Category {
   id: string;
@@ -23,6 +24,14 @@ interface Product {
   subcategories?: {
     name: string;
   };
+}
+
+function toSectionId(subcategoryName: string): string {
+  return `subcategory-${subcategoryName
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')}`;
 }
 
 async function getCategories(): Promise<Category[]> {
@@ -126,6 +135,17 @@ export default async function ShopPage({
     ? categories.find((cat) => cat.id === selectedCategory)
     : null;
 
+  const groupedProducts = products.reduce<Record<string, Product[]>>((acc, product) => {
+    const subcategoryName = product.subcategories?.name || 'Uncategorized';
+    if (!acc[subcategoryName]) {
+      acc[subcategoryName] = [];
+    }
+    acc[subcategoryName].push(product);
+    return acc;
+  }, {});
+
+  const subcategoryNames = Object.keys(groupedProducts).sort((a, b) => a.localeCompare(b));
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Page Header */}
@@ -142,10 +162,10 @@ export default async function ShopPage({
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-          {/* Sidebar - Categories Filter */}
+          {/* Sidebar - Category Filter + Section Drawer */}
           <aside className="lg:col-span-1">
             <div className="bg-white rounded-lg shadow-sm p-6 sticky top-6">
-              <h2 className="text-lg font-bold text-gray-900 mb-6">Categories</h2>
+              <h2 className="text-lg font-bold text-gray-900 mb-4">Categories</h2>
 
               <nav className="space-y-2">
                 {/* All Products Link */}
@@ -176,6 +196,17 @@ export default async function ShopPage({
                 ))}
               </nav>
 
+              {subcategoryNames.length > 0 && (
+                <>
+                  <div className="mt-6 pt-6 border-t border-gray-200">
+                    <h3 className="text-sm font-bold text-gray-900 mb-3 uppercase tracking-wider">
+                      Jump to Subcategory
+                    </h3>
+                    <SubcategorySpyNav subcategoryNames={subcategoryNames} />
+                  </div>
+                </>
+              )}
+
               {/* Results Count */}
               <div className="mt-6 pt-6 border-t border-gray-200">
                 <p className="text-sm text-gray-600">
@@ -185,62 +216,75 @@ export default async function ShopPage({
             </div>
           </aside>
 
-          {/* Main Content - Products Grid */}
+          {/* Main Content - Grouped Product Feed */}
           <main className="lg:col-span-3">
             {products.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
-                {products.map((product) => (
-                  <div
-                    key={product.id}
-                    className="group flex flex-col h-full bg-white rounded-xl shadow-sm hover:shadow-lg transition-shadow duration-300 overflow-hidden"
+              <div className="space-y-10">
+                {subcategoryNames.map((subcategoryName) => (
+                  <section
+                    key={subcategoryName}
+                    id={toSectionId(subcategoryName)}
+                    className="scroll-mt-24"
                   >
-                    {/* Product Image & Link */}
-                    <Link href={`/product/${product.id}`} className="relative overflow-hidden bg-gray-100 aspect-square block">
-                      <img
-                        src={product.image_url}
-                        alt={product.title}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      />
-                      {/* Stock Badge */}
-                      {!(product.in_stock ?? true) && (
-                        <div className="absolute top-2 right-2 bg-red-100 text-red-700 px-3 py-1 rounded-lg text-xs font-semibold">
-                          Out of Stock
+                    <hr className="border-gray-200 mb-5" />
+                    <h2 className="text-2xl font-bold text-gray-900 mb-6">{subcategoryName}</h2>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+                      {groupedProducts[subcategoryName].map((product) => (
+                        <div
+                          key={product.id}
+                          className="group flex flex-col h-full bg-white rounded-xl shadow-sm hover:shadow-lg transition-shadow duration-300 overflow-hidden"
+                        >
+                          {/* Product Image & Link */}
+                          <Link href={`/product/${product.id}`} className="relative overflow-hidden bg-gray-100 aspect-square block">
+                            <img
+                              src={product.image_url}
+                              alt={product.title}
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                            />
+                            {/* Stock Badge */}
+                            {!(product.in_stock ?? true) && (
+                              <div className="absolute top-2 right-2 bg-red-100 text-red-700 px-3 py-1 rounded-lg text-xs font-semibold">
+                                Out of Stock
+                              </div>
+                            )}
+                            {(product.in_stock ?? true) && (
+                              <div className="absolute top-2 right-2 bg-green-100 text-green-700 px-3 py-1 rounded-lg text-xs font-semibold">
+                                In Stock
+                              </div>
+                            )}
+                          </Link>
+
+                          {/* Product Info */}
+                          <div className="flex flex-col flex-grow p-4 sm:p-5">
+                            {/* Subcategory */}
+                            <p className="text-xs sm:text-sm text-gray-500 mb-2 uppercase tracking-wider font-semibold">
+                              {product.subcategories?.name || 'Accessories'}
+                            </p>
+
+                            {/* Title */}
+                            <Link href={`/product/${product.id}`}>
+                              <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-2 line-clamp-2 group-hover:text-pink-600 transition-colors duration-200 cursor-pointer">
+                                {product.title}
+                              </h3>
+                            </Link>
+
+                            {/* Price */}
+                            <p className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-pink-600 to-purple-600 bg-clip-text text-transparent mb-4 mt-auto">
+                              Tk. {product.price.toFixed(2)}
+                            </p>
+
+                            <Link
+                              href={`/product/${product.id}`}
+                              className="inline-flex items-center justify-center gap-2 w-full bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-700 hover:to-purple-700 text-white shadow-md hover:shadow-lg font-semibold py-2 sm:py-3 rounded-lg transition-all duration-200"
+                            >
+                              View Details
+                            </Link>
+                          </div>
                         </div>
-                      )}
-                      {(product.in_stock ?? true) && (
-                        <div className="absolute top-2 right-2 bg-green-100 text-green-700 px-3 py-1 rounded-lg text-xs font-semibold">
-                          In Stock
-                        </div>
-                      )}
-                    </Link>
-
-                    {/* Product Info */}
-                    <div className="flex flex-col flex-grow p-4 sm:p-5">
-                      {/* Subcategory */}
-                      <p className="text-xs sm:text-sm text-gray-500 mb-2 uppercase tracking-wider font-semibold">
-                        {product.subcategories?.name || 'Accessories'}
-                      </p>
-
-                      {/* Title */}
-                      <Link href={`/product/${product.id}`}>
-                        <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-2 line-clamp-2 group-hover:text-pink-600 transition-colors duration-200 cursor-pointer">
-                          {product.title}
-                        </h3>
-                      </Link>
-
-                      {/* Price */}
-                      <p className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-pink-600 to-purple-600 bg-clip-text text-transparent mb-4 mt-auto">
-                        Tk. {product.price.toFixed(2)}
-                      </p>
-
-                      <Link
-                        href={`/product/${product.id}`}
-                        className="inline-flex items-center justify-center gap-2 w-full bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-700 hover:to-purple-700 text-white shadow-md hover:shadow-lg font-semibold py-2 sm:py-3 rounded-lg transition-all duration-200"
-                      >
-                        View Details
-                      </Link>
+                      ))}
                     </div>
-                  </div>
+                  </section>
                 ))}
               </div>
             ) : (
