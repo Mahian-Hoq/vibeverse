@@ -328,7 +328,7 @@ export default function CheckoutPage() {
                       <p className="text-blue-800 text-sm">
                         Please send <span className="font-bold">Tk. {total.toFixed(2)}</span> to our bKash account:
                       </p>
-                      <p className="text-blue-900 font-mono font-bold text-lg mt-2">017XXXXXXXX</p>
+                      <p className="text-blue-900 font-mono font-bold text-lg mt-2">01759755408</p>
                       <p className="text-blue-800 text-sm mt-2">
                         After sending the money, please enter the last 3 digits of your bKash number below.
                       </p>
