@@ -43,11 +43,11 @@ export default function ProductDetailsClient({ product }: ProductDetailsClientPr
 
   return (
     <>
-      <div className="w-full bg-gray-100 rounded-xl overflow-hidden shadow-lg relative">
+      <div className="w-full bg-gray-100 rounded-xl overflow-hidden shadow-lg relative flex items-center justify-center min-h-[400px]">
         <img
           src={selectedImage}
           alt={product.title}
-          className="w-full h-full object-cover aspect-square"
+          className="w-auto max-h-[60vh] object-contain"
         />
 
         {images.length > 1 && (
@@ -79,12 +79,12 @@ export default function ProductDetailsClient({ product }: ProductDetailsClientPr
               type="button"
               key={`${img}-${idx}`}
               onClick={() => setSelectedImage(img)}
-              className={`aspect-square rounded-lg overflow-hidden border-2 transition-colors ${
+              className={`h-20 flex items-center justify-center rounded-lg overflow-hidden border-2 transition-colors ${
                 selectedImage === img ? 'border-pink-500' : 'border-gray-200 hover:border-pink-300'
               }`}
               aria-label={`Select image ${idx + 1}`}
             >
-              <img src={img} alt={`${product.title} thumbnail ${idx + 1}`} className="w-full h-full object-cover" />
+              <img src={img} alt={`${product.title} thumbnail ${idx + 1}`} className="max-h-full max-w-full object-contain" />
             </button>
           ))}
         </div>
