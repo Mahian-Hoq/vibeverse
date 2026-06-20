@@ -3,9 +3,9 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useCartStore } from '@/store/cartStore';
-import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
 import { ArrowLeft, Loader, CheckCircle, AlertCircle } from 'lucide-react';
+import { createCheckoutOrder } from '@/app/actions/orders';
 
 const SHIPPING_COST = 100.0;
 
@@ -115,42 +115,26 @@ export default function CheckoutPage() {
     }
 
     try {
-      // 1. Create order in database
-      const { data: orderData, error: orderError } = await supabase
-        .from('orders')
-        .insert([
-          {
-            user_id: null, // Guest checkout
-            total_amount: total,
-            payment_method: formData.payment_method,
-            whatsapp_number: formData.whatsapp_number,
-            bkash_last_3: formData.payment_method === 'BKASH' ? formData.bkash_last_3 : null,
-            delivery_address: formData.delivery_address,
-            customer_name: formData.name,
-            status: 'Pending',
-          },
-        ])
-        .select();
+      // 1. Create order in database via server action (service role, bypasses RLS)
+      const result = await createCheckoutOrder({
+        name: formData.name,
+        whatsapp_number: formData.whatsapp_number,
+        delivery_address: formData.delivery_address,
+        payment_method: formData.payment_method,
+        bkash_last_3: formData.payment_method === 'BKASH' ? formData.bkash_last_3 : null,
+        total_amount: total,
+        items: items.map((item) => ({
+          id: item.id,
+          price: item.price,
+          quantity: item.quantity,
+        })),
+      });
 
-      if (orderError || !orderData || orderData.length === 0) {
-        throw new Error(orderError?.message || 'Failed to create order');
+      if (result.error || !result.orderId) {
+        throw new Error(result.error || 'Failed to create order');
       }
 
-      const orderId = orderData[0].id;
-
-      // 2. Insert order items
-      const orderItems = items.map((item) => ({
-        order_id: orderId,
-        product_id: item.id,
-        quantity: item.quantity,
-        price_at_purchase: item.price,
-      }));
-
-      const { error: itemsError } = await supabase.from('order_items').insert(orderItems);
-
-      if (itemsError) {
-        throw new Error(itemsError.message || 'Failed to add items to order');
-      }
+      const orderId = result.orderId;
 
       // 3. Clear cart and redirect
       clearCart();
