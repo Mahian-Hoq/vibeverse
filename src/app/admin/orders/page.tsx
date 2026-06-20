@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabase';
 import { ChevronDown, Eye, AlertCircle, CheckCircle } from 'lucide-react';
+import { getAdminOrders, updateAdminOrderStatus } from '@/app/actions/orders';
 
 interface OrderItem {
   id: string;
@@ -51,28 +51,11 @@ export default function OrdersPage() {
       setLoading(true);
       setError(null);
 
-      // Fetch orders
-      const { data: ordersData, error: ordersError } = await supabase
-        .from('orders')
-        .select('*')
-        .order('created_at', { ascending: false });
+      const result = await getAdminOrders();
 
-      if (ordersError) throw new Error(ordersError.message);
+      if (result.error) throw new Error(result.error);
 
-      // Fetch order items with product details
-      const { data: itemsData, error: itemsError } = await supabase
-        .from('order_items')
-        .select('*, products(title, image_url)');
-
-      if (itemsError) throw new Error(itemsError.message);
-
-      // Combine orders with their items
-      const enrichedOrders = (ordersData || []).map((order) => ({
-        ...order,
-        order_items: (itemsData || []).filter((item) => item.order_id === order.id),
-      }));
-
-      setOrders(enrichedOrders);
+      setOrders(result.orders || []);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to fetch orders';
       setError(errorMessage);
@@ -85,12 +68,9 @@ export default function OrdersPage() {
   const handleStatusChange = async (orderId: string, newStatus: string) => {
     try {
       setStatusUpdating(orderId);
-      const { error } = await supabase
-        .from('orders')
-        .update({ status: newStatus, updated_at: new Date().toISOString() })
-        .eq('id', orderId);
+      const result = await updateAdminOrderStatus(orderId, newStatus);
 
-      if (error) throw new Error(error.message);
+      if (result.error) throw new Error(result.error);
 
       // Update local state
       setOrders((prev) =>

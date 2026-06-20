@@ -26,6 +26,35 @@ interface CreateOrderResult {
   error?: string;
 }
 
+interface AdminOrderItemRow {
+  id: string;
+  order_id: string;
+  product_id: string;
+  quantity: number;
+  price_at_purchase: number;
+  created_at: string;
+  products?: {
+    title: string;
+    image_url: string;
+  };
+}
+
+interface AdminOrderRow {
+  id: string;
+  customer_name: string;
+  whatsapp_number: string;
+  delivery_address: string;
+  total_amount: number;
+  payment_method: string;
+  bkash_last_3: string | null;
+  status: string;
+  created_at: string;
+}
+
+interface AdminOrderWithItems extends AdminOrderRow {
+  order_items: AdminOrderItemRow[];
+}
+
 function createServiceRoleClient() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -85,6 +114,64 @@ export async function createCheckoutOrder(input: CreateOrderInput): Promise<Crea
   } catch (error) {
     return {
       error: error instanceof Error ? error.message : 'An unexpected error occurred while creating the order',
+    };
+  }
+}
+
+export async function getAdminOrders(): Promise<{ orders?: AdminOrderWithItems[]; error?: string }> {
+  try {
+    const supabase = createServiceRoleClient();
+
+    const { data: ordersData, error: ordersError } = await supabase
+      .from('orders')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (ordersError) {
+      return { error: ordersError.message };
+    }
+
+    const { data: itemsData, error: itemsError } = await supabase
+      .from('order_items')
+      .select('*, products(title, image_url)');
+
+    if (itemsError) {
+      return { error: itemsError.message };
+    }
+
+    const enrichedOrders = (ordersData || []).map((order) => ({
+      ...order,
+      order_items: (itemsData || []).filter((item) => item.order_id === order.id),
+    })) as AdminOrderWithItems[];
+
+    return { orders: enrichedOrders };
+  } catch (error) {
+    return {
+      error: error instanceof Error ? error.message : 'Failed to fetch admin orders',
+    };
+  }
+}
+
+export async function updateAdminOrderStatus(
+  orderId: string,
+  newStatus: string
+): Promise<{ success?: boolean; error?: string }> {
+  try {
+    const supabase = createServiceRoleClient();
+
+    const { error } = await supabase
+      .from('orders')
+      .update({ status: newStatus, updated_at: new Date().toISOString() })
+      .eq('id', orderId);
+
+    if (error) {
+      return { error: error.message };
+    }
+
+    return { success: true };
+  } catch (error) {
+    return {
+      error: error instanceof Error ? error.message : 'Failed to update order status',
     };
   }
 }
