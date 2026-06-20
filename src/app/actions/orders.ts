@@ -1,6 +1,7 @@
 'use server';
 
 import { createClient as createSupabaseClient } from '@supabase/supabase-js';
+import { Resend } from 'resend';
 
 type PaymentMethod = 'COD' | 'BKASH' | 'DIU_DELIVERY';
 
@@ -71,6 +72,37 @@ function createServiceRoleClient() {
   });
 }
 
+function createResendClient() {
+  const apiKey = process.env.RESEND_API_KEY;
+
+  if (!apiKey) {
+    throw new Error('Missing Resend API key');
+  }
+
+  return new Resend(apiKey);
+}
+
+async function sendNewOrderNotification(orderId: string) {
+  try {
+    const resend = createResendClient();
+
+    await resend.emails.send({
+      from: 'onboarding@resend.dev',
+      to: ['mrdot1429@gmail.com'],
+      subject: '🚨 New Order Placed!',
+      html: `
+        <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #111827;">
+          <p>A new order has been placed.</p>
+          <p>Please check the admin dashboard to review the order details.</p>
+          <p style="font-size: 12px; color: #6b7280;">Order ID: ${orderId}</p>
+        </div>
+      `,
+    });
+  } catch (error) {
+    console.error('Failed to send new order notification email', error);
+  }
+}
+
 export async function createCheckoutOrder(input: CreateOrderInput): Promise<CreateOrderResult> {
   try {
     const supabase = createServiceRoleClient();
@@ -109,6 +141,8 @@ export async function createCheckoutOrder(input: CreateOrderInput): Promise<Crea
       await supabase.from('orders').delete().eq('id', orderData.id);
       return { error: itemsError.message || 'Failed to add items to order' };
     }
+
+    await sendNewOrderNotification(orderData.id);
 
     return { success: true, orderId: orderData.id };
   } catch (error) {
