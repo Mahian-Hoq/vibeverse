@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { createClient } from '@/utils/supabase/client';
+import { uploadImageToCloudinary } from '@/lib/cloudinary';
 import { Upload, Trash2, Loader, AlertCircle, Check, Eye, EyeOff } from 'lucide-react';
 
 interface HeroBanner {
@@ -73,27 +74,6 @@ export default function BannersPage() {
       };
       reader.readAsDataURL(file);
     }
-  };
-
-  const uploadImageToCloudinary = async (file: File): Promise<string> => {
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('upload_preset', process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || '');
-
-    const response = await fetch(
-      `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload`,
-      {
-        method: 'POST',
-        body: formData,
-      }
-    );
-
-    if (!response.ok) {
-      throw new Error('Failed to upload image to Cloudinary');
-    }
-
-    const data = await response.json();
-    return data.secure_url;
   };
 
   const handleUploadBanner = async (e: React.FormEvent) => {
